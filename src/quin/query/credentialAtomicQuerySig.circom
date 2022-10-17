@@ -1,7 +1,7 @@
 pragma circom 2.0.0;
-include "../../../node_modules/circomlib/circuits/mux1.circom";
-include "../../../node_modules/circomlib/circuits/bitify.circom";
-include "../../../node_modules/circomlib/circuits/comparators.circom";
+include "../../../../node_modules/circomlib/circuits/mux1.circom";
+include "../../../../node_modules/circomlib/circuits/bitify.circom";
+include "../../../../node_modules/circomlib/circuits/comparators.circom";
 include "../idOwnershipBySignature.circom";
 include "query.circom";
 include "decompressors.circom";
@@ -36,11 +36,11 @@ template CredentialAtomicQuerySig(IdOwnershipLevels, IssuerLevels, valueTreeDept
     signal input userState;
 
     signal input userClaimsTreeRoot;
-    signal input userAuthClaimMtp[IdOwnershipLevels];
+    signal input userAuthClaimMtp[IdOwnershipLevels * 4];
     signal input userAuthClaim[8];
 
     signal input userRevTreeRoot;
-    signal input userAuthClaimNonRevMtp[IdOwnershipLevels];
+    signal input userAuthClaimNonRevMtp[IdOwnershipLevels * 4];
     signal input userAuthClaimNonRevMtpNoAux;
     signal input userAuthClaimNonRevMtpAuxHi;
     signal input userAuthClaimNonRevMtpAuxHv;
@@ -66,9 +66,9 @@ template CredentialAtomicQuerySig(IdOwnershipLevels, IssuerLevels, valueTreeDept
     signal input issuerID;
 
     signal input issuerAuthClaim[8];
-    signal input issuerAuthClaimMtp[IssuerLevels];
+    signal input issuerAuthClaimMtp[IssuerLevels * 4];
     // issuer auth claim non rev proof
-    signal input issuerAuthClaimNonRevMtp[IssuerLevels];
+    signal input issuerAuthClaimNonRevMtp[IssuerLevels * 4];
     signal input issuerAuthClaimNonRevMtpNoAux;
     signal input issuerAuthClaimNonRevMtpAuxHi;
     signal input issuerAuthClaimNonRevMtpAuxHv;
@@ -79,7 +79,7 @@ template CredentialAtomicQuerySig(IdOwnershipLevels, IssuerLevels, valueTreeDept
     signal output issuerAuthState;
 
     // issuerClaim non rev inputs
-    signal input issuerClaimNonRevMtp[IssuerLevels];
+    signal input issuerClaimNonRevMtp[IssuerLevels * 4];
     signal input issuerClaimNonRevMtpNoAux;
     signal input issuerClaimNonRevMtpAuxHi;
     signal input issuerClaimNonRevMtpAuxHv;
@@ -111,11 +111,11 @@ template CredentialAtomicQuerySig(IdOwnershipLevels, IssuerLevels, valueTreeDept
     component userIdOwnership = IdOwnershipBySignature(IdOwnershipLevels);
 
     userIdOwnership.userClaimsTreeRoot <== userClaimsTreeRoot; // currentHolderStateClaimsTreeRoot
-    for (var i=0; i<IdOwnershipLevels; i++) { userIdOwnership.userAuthClaimMtp[i] <== userAuthClaimMtp[i]; }
+    for (var i=0; i<IdOwnershipLevels * 4; i++) { userIdOwnership.userAuthClaimMtp[i] <== userAuthClaimMtp[i]; }
     for (var i=0; i<8; i++) { userIdOwnership.userAuthClaim[i] <== userAuthClaim[i]; }
 
     userIdOwnership.userRevTreeRoot <== userRevTreeRoot;  // currentHolderStateClaimsRevTreeRoot
-    for (var i=0; i<IdOwnershipLevels; i++) { userIdOwnership.userAuthClaimNonRevMtp[i] <== userAuthClaimNonRevMtp[i]; }
+    for (var i=0; i<IdOwnershipLevels * 4; i++) { userIdOwnership.userAuthClaimNonRevMtp[i] <== userAuthClaimNonRevMtp[i]; }
     userIdOwnership.userAuthClaimNonRevMtpNoAux <== userAuthClaimNonRevMtpNoAux;
     userIdOwnership.userAuthClaimNonRevMtpAuxHv <== userAuthClaimNonRevMtpAuxHv;
     userIdOwnership.userAuthClaimNonRevMtpAuxHi <== userAuthClaimNonRevMtpAuxHi;
@@ -169,14 +169,14 @@ template CredentialAtomicQuerySig(IdOwnershipLevels, IssuerLevels, valueTreeDept
     //
     component smtIssuerAuthClaimExists = checkClaimExists(IssuerLevels);
     for (var i=0; i<8; i++) { smtIssuerAuthClaimExists.claim[i] <== issuerAuthClaim[i]; }
-    for (var i=0; i<IssuerLevels; i++) { smtIssuerAuthClaimExists.claimMTP[i] <== issuerAuthClaimMtp[i]; }
+    for (var i=0; i<IssuerLevels * 4; i++) { smtIssuerAuthClaimExists.claimMTP[i] <== issuerAuthClaimMtp[i]; }
     smtIssuerAuthClaimExists.treeRoot <== issuerAuthClaimsTreeRoot;
 
     // issuerAuthClaim proof of non-revocation
     //
     component verifyIssuerAuthClaimNotRevoked = checkClaimNotRevoked(IssuerLevels);
     for (var i=0; i<8; i++) { verifyIssuerAuthClaimNotRevoked.claim[i] <== issuerAuthClaim[i]; }
-    for (var i=0; i<IssuerLevels; i++) {
+    for (var i=0; i<IssuerLevels * 4; i++) {
         verifyIssuerAuthClaimNotRevoked.claimNonRevMTP[i] <== issuerAuthClaimNonRevMtp[i];
     }
     verifyIssuerAuthClaimNotRevoked.noAux <== issuerAuthClaimNonRevMtpNoAux;
@@ -206,7 +206,7 @@ template CredentialAtomicQuerySig(IdOwnershipLevels, IssuerLevels, valueTreeDept
     // non revocation status
     component verifyClaimNotRevoked = checkClaimNotRevoked(IssuerLevels);
     for (var i=0; i<8; i++) { verifyClaimNotRevoked.claim[i] <== issuerClaim[i]; }
-    for (var i=0; i<IssuerLevels; i++) {
+    for (var i=0; i<IssuerLevels * 4; i++) {
         verifyClaimNotRevoked.claimNonRevMTP[i] <== issuerClaimNonRevMtp[i];
     }
     verifyClaimNotRevoked.noAux <== issuerClaimNonRevMtpNoAux;

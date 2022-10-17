@@ -1,12 +1,12 @@
 pragma circom 2.0.0;
 
-include "../../../node_modules/circomlib/circuits/bitify.circom";
-include "../../../node_modules/circomlib/circuits/eddsaposeidon.circom";
-include "../../../node_modules/circomlib/circuits/smt/smtverifier.circom";
-include "../../../node_modules/circomlib/circuits/mux3.circom";
-include "../../../node_modules/circomlib/circuits/mux1.circom";
-include "../../../node_modules/circomlib/circuits/mux2.circom";
-include "../../../node_modules/circomlib/circuits/poseidon.circom";
+include "../../../../node_modules/circomlib/circuits/bitify.circom";
+include "../../../../node_modules/circomlib/circuits/eddsaposeidon.circom";
+include "../../../../node_modules/circomlib/circuits/smt/smtverifier.circom";
+include "../../../../node_modules/circomlib/circuits/mux3.circom";
+include "../../../../node_modules/circomlib/circuits/mux1.circom";
+include "../../../../node_modules/circomlib/circuits/mux2.circom";
+include "../../../../node_modules/circomlib/circuits/poseidon.circom";
 
 // getClaimSubjectOtherIden checks that a claim Subject is OtherIden and outputs the identity within.
 template getClaimSubjectOtherIden() {

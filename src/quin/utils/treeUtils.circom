@@ -1,10 +1,10 @@
 pragma circom 2.0.0;
 
-include "../../../node_modules/circomlib/circuits/bitify.circom";
-include "../../../node_modules/circomlib/circuits/eddsaposeidon.circom";
-include "../../../node_modules/circomlib/circuits/smt/smtverifier.circom";
-include "../../../node_modules/circomlib/circuits/mux3.circom";
-include "../../../node_modules/circomlib/circuits/mux1.circom";
+include "../../../../node_modules/circomlib/circuits/bitify.circom";
+include "../../../../node_modules/circomlib/circuits/eddsaposeidon.circom";
+include "../../../../node_modules/circomlib/circuits/mux3.circom";
+include "../../../../node_modules/circomlib/circuits/mux1.circom";
+include "../quinarySmt/quinSmtVerifier.circom";
 include "claimUtils.circom";
 
 // getIdenState caclulates the Identity state out of the claims tree root,
@@ -27,17 +27,16 @@ template getIdenState() {
 // checkClaimExists verifies that claim is included into the claim tree root
 template checkClaimExists(IssuerLevels) {
 	signal input claim[8];
-	signal input claimMTP[IssuerLevels];
+	signal input claimMTP[IssuerLevels * 4];
 	signal input treeRoot;
 
 	component claimHiHv = getClaimHiHv();
 	for (var i=0; i<8; i++) { claimHiHv.claim[i] <== claim[i]; }
 
-	component smtClaimExists = SMTVerifier(IssuerLevels);
-	smtClaimExists.enabled <== 1;
+	component smtClaimExists = QuinSMTVerifier(IssuerLevels);
 	smtClaimExists.fnc <== 0; // Inclusion
 	smtClaimExists.root <== treeRoot;
-	for (var i=0; i<IssuerLevels; i++) { smtClaimExists.siblings[i] <== claimMTP[i]; }
+	for (var i=0; i<IssuerLevels * 4; i++) { smtClaimExists.siblings[i] <== claimMTP[i]; }
 	smtClaimExists.oldKey <== 0;
 	smtClaimExists.oldValue <== 0;
 	smtClaimExists.isOld0 <== 0;
@@ -47,7 +46,7 @@ template checkClaimExists(IssuerLevels) {
 
 template checkClaimNotRevoked(treeLevels) {
     signal input claim[8];
-    signal input claimNonRevMTP[treeLevels];
+    signal input claimNonRevMTP[treeLevels * 4];
     signal input treeRoot;
     signal input noAux;
     signal input auxHi;
@@ -56,11 +55,10 @@ template checkClaimNotRevoked(treeLevels) {
 	component claimRevNonce = getClaimRevNonce();
 	for (var i=0; i<8; i++) { claimRevNonce.claim[i] <== claim[i]; }
 
-    component smtClaimNotExists = SMTVerifier(treeLevels);
-    smtClaimNotExists.enabled <== 1;
+    component smtClaimNotExists = QuinSMTVerifier(treeLevels);
     smtClaimNotExists.fnc <== 1; // Non-inclusion
     smtClaimNotExists.root <== treeRoot;
-    for (var i=0; i<treeLevels; i++) { smtClaimNotExists.siblings[i] <== claimNonRevMTP[i]; }
+    for (var i=0; i<treeLevels * 4; i++) { smtClaimNotExists.siblings[i] <== claimNonRevMTP[i]; }
     smtClaimNotExists.oldKey <== auxHi;
     smtClaimNotExists.oldValue <== auxHv;
     smtClaimNotExists.isOld0 <== noAux;
@@ -87,13 +85,13 @@ template checkIdenStateMatchesRoots() {
 // verifyClaimIssuance verifies that claim is issued by the issuer and not revoked
 template verifyClaimIssuanceNonRev(IssuerLevels) {
 	signal input claim[8];
-	signal input claimIssuanceMtp[IssuerLevels];
+	signal input claimIssuanceMtp[IssuerLevels * 4];
 	signal input claimIssuanceClaimsTreeRoot;
 	signal input claimIssuanceRevTreeRoot;
 	signal input claimIssuanceRootsTreeRoot;
 	signal input claimIssuanceIdenState;
 
-	signal input claimNonRevMtp[IssuerLevels];
+	signal input claimNonRevMtp[IssuerLevels * 4];
 	signal input claimNonRevMtpNoAux;
 	signal input claimNonRevMtpAuxHi;
 	signal input claimNonRevMtpAuxHv;
@@ -105,7 +103,7 @@ template verifyClaimIssuanceNonRev(IssuerLevels) {
     // verify country claim is included in claims tree root
     component claimIssuanceCheck = checkClaimExists(IssuerLevels);
     for (var i=0; i<8; i++) { claimIssuanceCheck.claim[i] <== claim[i]; }
-    for (var i=0; i<IssuerLevels; i++) { claimIssuanceCheck.claimMTP[i] <== claimIssuanceMtp[i]; }
+    for (var i=0; i<IssuerLevels * 4; i++) { claimIssuanceCheck.claimMTP[i] <== claimIssuanceMtp[i]; }
     claimIssuanceCheck.treeRoot <== claimIssuanceClaimsTreeRoot;
 
     // verify issuer state includes country claim
@@ -118,7 +116,7 @@ template verifyClaimIssuanceNonRev(IssuerLevels) {
     // check non-revocation proof for claim
     component verifyClaimNotRevoked = checkClaimNotRevoked(IssuerLevels);
     for (var i=0; i<8; i++) { verifyClaimNotRevoked.claim[i] <== claim[i]; }
-    for (var i=0; i<IssuerLevels; i++) {
+    for (var i=0; i<IssuerLevels * 4; i++) {
         verifyClaimNotRevoked.claimNonRevMTP[i] <== claimNonRevMtp[i];
     }
     verifyClaimNotRevoked.noAux <== claimNonRevMtpNoAux;
@@ -136,11 +134,11 @@ template verifyClaimIssuanceNonRev(IssuerLevels) {
 
 template VerifyAuthClaimAndSignature(nLevels) {
 	signal input claimsTreeRoot;
-	signal input authClaimMtp[nLevels];
+	signal input authClaimMtp[nLevels * 4];
 	signal input authClaim[8];
 
 	signal input revTreeRoot;
-    signal input authClaimNonRevMtp[nLevels];
+    signal input authClaimNonRevMtp[nLevels * 4];
     signal input authClaimNonRevMtpNoAux;
     signal input authClaimNonRevMtpAuxHi;
     signal input authClaimNonRevMtpAuxHv;
@@ -159,12 +157,12 @@ template VerifyAuthClaimAndSignature(nLevels) {
 
     component claimExists = checkClaimExists(nLevels);
     for (var i=0; i<8; i++) { claimExists.claim[i] <== authClaim[i]; }
-	for (var i=0; i<nLevels; i++) { claimExists.claimMTP[i] <== authClaimMtp[i]; }
+	for (var i=0; i<nLevels * 4; i++) { claimExists.claimMTP[i] <== authClaimMtp[i]; }
     claimExists.treeRoot <== claimsTreeRoot;
 
     component smtClaimNotRevoked = checkClaimNotRevoked(nLevels);
     for (var i=0; i<8; i++) { smtClaimNotRevoked.claim[i] <== authClaim[i]; }
-    for (var i=0; i<nLevels; i++) {
+    for (var i=0; i<nLevels * 4; i++) {
         smtClaimNotRevoked.claimNonRevMTP[i] <== authClaimNonRevMtp[i];
     }
     smtClaimNotRevoked.treeRoot <== revTreeRoot;
@@ -189,8 +187,8 @@ template cutId() {
 	component idBits = Num2Bits(256);
 	idBits.in <== in;
 
-	component cutted = Bits2Num(256-16-16-8);
-	for (var i=16; i<256-16-8; i++) {
+	component cutted = Bits2Num(256-16-8);
+	for (var i=16; i<256-8; i++) {
 		cutted.in[i-16] <== idBits.out[i];
 	}
 	out <== cutted.out;
@@ -203,9 +201,9 @@ template cutState() {
 	component stateBits = Num2Bits(256);
 	stateBits.in <== in;
 
-	component cutted = Bits2Num(256-16-16-8);
-	for (var i=0; i<256-16-16-8; i++) {
-		cutted.in[i] <== stateBits.out[i+16+16+8];
+	component cutted = Bits2Num(256-16-8);
+	for (var i=0; i<256-16-8; i++) {
+		cutted.in[i] <== stateBits.out[i+16+8];
 	}
 	out <== cutted.out;
 }
