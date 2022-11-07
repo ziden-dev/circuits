@@ -1,7 +1,7 @@
-pragma circom 2.0.0;
-include "../../../../node_modules/circomlib/circuits/mux1.circom";
-include "../../../../node_modules/circomlib/circuits/bitify.circom";
-include "../../../../node_modules/circomlib/circuits/comparators.circom";
+pragma circom 2.0.9;
+include "../../../node_modules/circomlib/circuits/mux1.circom";
+include "../../../node_modules/circomlib/circuits/bitify.circom";
+include "../../../node_modules/circomlib/circuits/comparators.circom";
 include "../idOwnershipBySignature.circom";
 include "query.circom";
 include "decompressors.circom";
@@ -179,3 +179,5 @@ template CredentialAtomicQueryMTP(IdOwnershipLevels, IssuerLevels, valueTreeDept
     }
     q.out === 1;
 }
+
+component main{public[userID, userState, challenge, issuerID,issuerClaimIdenState, issuerClaimNonRevState, determinisiticValue, compactInput,mask ]} = CredentialAtomicQueryMTP(32,32,10);

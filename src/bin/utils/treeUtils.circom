@@ -1,10 +1,10 @@
 pragma circom 2.0.0;
 
-include "../../../../node_modules/circomlib/circuits/bitify.circom";
-include "../../../../node_modules/circomlib/circuits/eddsaposeidon.circom";
-include "../../../../node_modules/circomlib/circuits/smt/smtverifier.circom";
-include "../../../../node_modules/circomlib/circuits/mux3.circom";
-include "../../../../node_modules/circomlib/circuits/mux1.circom";
+include "../../../node_modules/circomlib/circuits/bitify.circom";
+include "../../../node_modules/circomlib/circuits/eddsaposeidon.circom";
+include "../../../node_modules/circomlib/circuits/smt/smtverifier.circom";
+include "../../../node_modules/circomlib/circuits/mux3.circom";
+include "../../../node_modules/circomlib/circuits/mux1.circom";
 include "claimUtils.circom";
 
 // getIdenState caclulates the Identity state out of the claims tree root,
@@ -189,8 +189,8 @@ template cutId() {
 	component idBits = Num2Bits(256);
 	idBits.in <== in;
 
-	component cutted = Bits2Num(256-16-16-8);
-	for (var i=16; i<256-16-8; i++) {
+	component cutted = Bits2Num(256-16-8);
+	for (var i=16; i<256-8; i++) {
 		cutted.in[i-16] <== idBits.out[i];
 	}
 	out <== cutted.out;
@@ -203,9 +203,9 @@ template cutState() {
 	component stateBits = Num2Bits(256);
 	stateBits.in <== in;
 
-	component cutted = Bits2Num(256-16-16-8);
-	for (var i=0; i<256-16-16-8; i++) {
-		cutted.in[i] <== stateBits.out[i+16+16+8];
+	component cutted = Bits2Num(256-16-8);
+	for (var i=0; i<256-16-8; i++) {
+		cutted.in[i] <== stateBits.out[i+16+8];
 	}
 	out <== cutted.out;
 }
