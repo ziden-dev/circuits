@@ -1,15 +1,15 @@
 
 pragma circom 2.0.0;
 
-include "../../node_modules/circomlib/circuits/babyjub.circom";
-include "../../node_modules/circomlib/circuits/comparators.circom";
-include "../../node_modules/circomlib/circuits/poseidon.circom";
-include "../../node_modules/circomlib/circuits/bitify.circom";
-include "../../node_modules/circomlib/circuits/smt/smtverifier.circom";
-include "../../node_modules/circomlib/circuits/smt/smtprocessor.circom";
+include "../../../node_modules/circomlib/circuits/babyjub.circom";
+include "../../../node_modules/circomlib/circuits/comparators.circom";
+include "../../../node_modules/circomlib/circuits/poseidon.circom";
+include "../../../node_modules/circomlib/circuits/bitify.circom";
+include "../../../node_modules/circomlib/circuits/smt/smtverifier.circom";
+include "../../../node_modules/circomlib/circuits/smt/smtprocessor.circom";
 include "idOwnershipBySignature.circom";
 
-template StateTransition(nLevels) {
+template StateTransition(IdOwnershipLevels) {
     // we have no constraints for "id" in this circuit, however we introduce "id" input here
     // as it serves as public input which should be the same for prover and verifier
     signal input userID;
@@ -17,21 +17,20 @@ template StateTransition(nLevels) {
     signal input newUserState;
     signal input isOldStateGenesis;
 
-    signal input claimsTreeRoot;
-    signal input authClaimMtp[nLevels];
-    signal input authClaim[8];
+	signal input userAuthsRoot;
+	signal input userAuthMtp[IdOwnershipLevels * 4];
+	signal input userAuthHi;
+    signal input userAuthPubX;
+    signal input userAuthPubY;
 
-    signal input revTreeRoot;
-    signal input authClaimNonRevMtp[nLevels];
-    signal input authClaimNonRevMtpNoAux;
-    signal input authClaimNonRevMtpAuxHv;
-    signal input authClaimNonRevMtpAuxHi;
 
-    signal input rootsTreeRoot;
+	signal input userClaimsRoot;
+    signal input userClaimRevRoot;
 
-    signal input signatureR8x;
-    signal input signatureR8y;
-    signal input signatureS;
+	signal input challengeSignatureR8x;
+	signal input challengeSignatureR8y;
+	signal input challengeSignatureS;
+
 
     component cutId = cutId();
     cutId.in <== userID;
@@ -57,30 +56,38 @@ template StateTransition(nLevels) {
     oldNewNotEqual.in[0] <== oldUserState;
     oldNewNotEqual.in[1] <== newUserState;
     oldNewNotEqual.out === 0;
-
+    
+    
     // check userID ownership by correct signature of a hash of old state and new state
     component challenge = Poseidon(2);
     challenge.inputs[0] <== oldUserState;
     challenge.inputs[1] <== newUserState;
 
-    component checkIdOwnership = IdOwnershipBySignature(nLevels);
+    /* Id ownership check*/
+    
+    component userIdOwnership = IdOwnershipBySignature(IdOwnershipLevels);
 
-    checkIdOwnership.userClaimsTreeRoot <== claimsTreeRoot;
-    for (var i=0; i<nLevels; i++) { checkIdOwnership.userAuthClaimMtp[i] <== authClaimMtp[i]; }
-    for (var i=0; i<8; i++) { checkIdOwnership.userAuthClaim[i] <== authClaim[i]; }
+    userIdOwnership.userAuthsRoot <== userAuthsRoot;
+    userIdOwnership.userAuthHi <== userAuthHi;
+    userIdOwnership.userAuthPubX <== userAuthPubX;
+    userIdOwnership.userAuthPubY <== userAuthPubY;
+    for (var i=0; i<IdOwnershipLevels * 4; i++) { userIdOwnership.userAuthMtp[i] <== userAuthMtp[i]; }
+    
 
-    checkIdOwnership.userRevTreeRoot <== revTreeRoot;
-    for (var i=0; i<nLevels; i++) { checkIdOwnership.userAuthClaimNonRevMtp[i] <== authClaimNonRevMtp[i]; }
-    checkIdOwnership.userAuthClaimNonRevMtpNoAux <== authClaimNonRevMtpNoAux;
-    checkIdOwnership.userAuthClaimNonRevMtpAuxHv <== authClaimNonRevMtpAuxHv;
-    checkIdOwnership.userAuthClaimNonRevMtpAuxHi <== authClaimNonRevMtpAuxHi;
+    // userIdOwnership.userAuthRevRoot <== userAuthRevRoot; 
+    // for (var i=0; i<IdOwnershipLevels * 4; i++) { userIdOwnership.userAuthNonRevMtp[i] <== userAuthNonRevMtp[i]; }
+    // userIdOwnership.userAuthNonRevMtpNoAux <== userAuthNonRevMtpNoAux;
+    // userIdOwnership.userAuthNonRevMtpAuxHv <== userAuthNonRevMtpAuxHv;
+    // userIdOwnership.userAuthNonRevMtpAuxHi <== userAuthNonRevMtpAuxHi;
 
-    checkIdOwnership.userRootsTreeRoot <== rootsTreeRoot;
+    userIdOwnership.userClaimsRoot <== userClaimsRoot;
+    userIdOwnership.userClaimRevRoot <== userClaimRevRoot;
 
-    checkIdOwnership.challenge <== challenge.out;
-    checkIdOwnership.challengeSignatureR8x <== signatureR8x;
-    checkIdOwnership.challengeSignatureR8y <== signatureR8y;
-    checkIdOwnership.challengeSignatureS <== signatureS;
+    userIdOwnership.challenge <== challenge.out;
+    userIdOwnership.challengeSignatureR8x <== challengeSignatureR8x;
+    userIdOwnership.challengeSignatureR8y <== challengeSignatureR8y;
+    userIdOwnership.challengeSignatureS <== challengeSignatureS;
 
-    checkIdOwnership.userState <== oldUserState;
+    userIdOwnership.userState <== oldUserState;
+
 }

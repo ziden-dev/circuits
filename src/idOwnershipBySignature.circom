@@ -14,17 +14,14 @@ include "utils/treeUtils.circom";
 template IdOwnershipBySignature(nLevels) {
     signal input userState;
 
-	signal input userClaimsTreeRoot;
-	signal input userAuthClaimMtp[nLevels];
-	signal input userAuthClaim[8];
+	signal input userAuthsRoot;
+	signal input userAuthMtp[nLevels * 4];
+	signal input userAuthHi;
+    signal input userAuthPubX;
+    signal input userAuthPubY;
 
-	signal input userRevTreeRoot;
-    signal input userAuthClaimNonRevMtp[nLevels];
-    signal input userAuthClaimNonRevMtpNoAux;
-    signal input userAuthClaimNonRevMtpAuxHi;
-    signal input userAuthClaimNonRevMtpAuxHv;
-
-	signal input userRootsTreeRoot;
+	signal input userClaimsRoot;
+    signal input userClaimRevRoot;
 
 	signal input challenge;
 	signal input challengeSignatureR8x;
@@ -32,25 +29,23 @@ template IdOwnershipBySignature(nLevels) {
 	signal input challengeSignatureS;
 
 
-    component verifyAuthClaim = VerifyAuthClaimAndSignature(nLevels);
-    for (var i=0; i<8; i++) { verifyAuthClaim.authClaim[i] <== userAuthClaim[i]; }
-	for (var i=0; i<nLevels; i++) { verifyAuthClaim.authClaimMtp[i] <== userAuthClaimMtp[i]; }
-	verifyAuthClaim.claimsTreeRoot <== userClaimsTreeRoot;
-	verifyAuthClaim.revTreeRoot <== userRevTreeRoot;
-	for (var i=0; i<nLevels; i++) { verifyAuthClaim.authClaimNonRevMtp[i] <== userAuthClaimNonRevMtp[i]; }
-	verifyAuthClaim.authClaimNonRevMtpNoAux <== userAuthClaimNonRevMtpNoAux;
-	verifyAuthClaim.authClaimNonRevMtpAuxHv <== userAuthClaimNonRevMtpAuxHv;
-	verifyAuthClaim.authClaimNonRevMtpAuxHi <== userAuthClaimNonRevMtpAuxHi;
+    component verifyAuth = VerifyAuthAndSignature(nLevels);
+    
+    verifyAuth.authHi <== userAuthHi;
+    verifyAuth.authPubX <== userAuthPubX;
+    verifyAuth.authPubY <== userAuthPubY;
+	for (var i=0; i<nLevels * 4; i++) { verifyAuth.authMtp[i] <== userAuthMtp[i]; }
+	verifyAuth.authsRoot <== userAuthsRoot;
 
-    verifyAuthClaim.challengeSignatureS <== challengeSignatureS;
-    verifyAuthClaim.challengeSignatureR8x <== challengeSignatureR8x;
-    verifyAuthClaim.challengeSignatureR8y <== challengeSignatureR8y;
-    verifyAuthClaim.challenge <== challenge;
+    verifyAuth.challengeSignatureS <== challengeSignatureS;
+    verifyAuth.challengeSignatureR8x <== challengeSignatureR8x;
+    verifyAuth.challengeSignatureR8y <== challengeSignatureR8y;
+    verifyAuth.challenge <== challenge;
 
     component checkUserState = checkIdenStateMatchesRoots();
-    checkUserState.claimsTreeRoot <== userClaimsTreeRoot;
-    checkUserState.revTreeRoot <== userRevTreeRoot;
-    checkUserState.rootsTreeRoot <== userRootsTreeRoot;
+    checkUserState.authsRoot <== userAuthsRoot;
+    checkUserState.claimsRoot <== userClaimsRoot;
+    checkUserState.claimRevRoot <== userClaimRevRoot;
     checkUserState.expectedState <== userState;
 }
 
